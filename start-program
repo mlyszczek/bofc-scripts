@@ -1,0 +1,94 @@
+#!/bin/sh
+
+. /usr/bofc/lib/utils.sh
+cat << HELP | help ne 0 $@
+Lists terminal programs I use and then calls a program with
+specified arguments - for my memory should it fail
+HELP
+
+# I use tone of cli programs, sometimes it's hard to memorize them all
+# in this script I put all programs that I sometimes use and tend to
+# forget a name
+
+av="
+sxiv; image viewer with gif support
+feh; simple image viewer, no gif support
+mpv; video player
+ncmpcpp; cli client for mpd server music player
+"
+
+managers="
+task; taskwarrior, but for my personal related stuff
+todo; taskwarrior, shared tasks with my wife
+calcurse; calendar manager
+mc; midnight commander, file manager
+"
+
+readers="
+tuir; reddit terminal viewer
+youtube-viewer; what the name suggests
+mutt; best mail reader
+chromium; shitty browser that controls you!
+elinks; awesome browser hat you control!
+"
+
+misc="
+tmux; terminal multiplexer, terminal does not exist without it
+weechat; irc/im client
+x2goclient; better vnc for single program
+"
+
+tools="
+bc; terminal calculator
+gertty; terminal gerrit browser
+jira; cli jira client written in go (no tui)
+"
+
+monitors="
+	htop; process viewer
+	iotop; disk usage
+	nmon; system resource monitor
+	nettop; network usage by process
+"
+max_prog_name_len=16
+
+programs=
+i=0
+
+
+for c in av managers readers misc tools monitors; do
+	echo $c:
+
+	IFS=$'\n'; for p in ${!c} ; do
+		((i++))
+		name=$(echo $p | cut -f1 -d\;)
+		desc=$(echo $p | cut -f2 -d\;)
+		programs+="$name "
+
+		printf "%3d) %-${max_prog_name_len}s %s\n" $i "$name" "$desc"
+	done
+
+	echo
+done
+
+
+read choice
+if [ -z "$choice" ]; then
+	echo "byebye"
+	exit 0
+fi
+
+prog=$(echo $programs | cut -f$choice -d\ )
+
+case $prog in
+	youtube-viewer)
+		youtube-viewer --order=viewCount --player=mpv $@
+		;;
+
+	bc)
+		bc -l $@
+		;;
+
+	*)
+		eval $prog $@
+esac

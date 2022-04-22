@@ -1,0 +1,9 @@
+#!/bin/sh
+
+. /usr/bofc/lib/utils.sh
+cat << HELP | help ne 1 $@
+Opens markdown file in nice html generated way in elinks. It's prettier
+than reading from terminal, most usefull for mangled markdowns.
+HELP
+
+markdown $1 | { echo '<html><body>'; cat - ; echo '</body></html>'; } | elinks

@@ -1,0 +1,10 @@
+#!/bin/sh
+
+. /usr/bofc/lib/utils.sh
+cat << HELP | help ne 1 $@
+usage: $0 <file>
+
+Prints text file
+HELP
+
+lpr -P Brokul -o raw $1

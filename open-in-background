@@ -1,0 +1,12 @@
+#!/bin/sh
+
+. /usr/bofc/lib/utils.sh
+cat << HELP | help ne 0 $@
+Same as open, but in background (new window)
+HELP
+
+# BROWSER cannot have params set like
+# BROWSER="open -n", this does not work
+# for example in tuir, this we have wrapper
+# script to workaround that
+/usr/bofc/bin/open -n $@
