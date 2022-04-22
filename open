@@ -1,0 +1,280 @@
+#!/bin/sh
+
+#exec 2> /tmp/open.err
+#set -x
+
+## ==========================================================================
+#              / __/__  __ ____   _____ / /_ (_)____   ____   _____
+#             / /_ / / / // __ \ / ___// __// // __ \ / __ \ / ___/
+#            / __// /_/ // / / // /__ / /_ / // /_/ // / / /(__  )
+#           /_/   \__,_//_/ /_/ \___/ \__//_/ \____//_/ /_//____/
+## ==========================================================================
+
+
+## ==========================================================================
+#   Checks if $1 is url or not
+## ==========================================================================
+is_url()
+{
+	echo "$1" | grep -P '(https?|ftp):\/\/(-\.)?([^\s/?\.#-]+\.?)+(\/[^\s]*)?$'
+}
+
+
+## ==========================================================================
+#   Checks if $1 is jira ticket or not
+## ==========================================================================
+is_jira_ticket()
+{
+	echo "$1" | grep -P '(OMWHMXRI|OMWHI|OMWAI|ARRISEOS|ONEM)-[0-9]*' >/dev/null
+}
+
+
+## ==========================================================================
+#   Checks if $1 is gerrit patch
+## ==========================================================================
+is_gerrit_patch()
+{
+	echo "$1" | grep -P "meta-lgi-\w+:\d{5,7}" >/dev/null
+}
+
+
+## ==========================================================================
+#   Runs command, if -n has been passed, it will be opened in new terminal
+## ==========================================================================
+term()
+{
+	if [ $open_in_new_window -eq 0 ]; then
+		# same window open, just run command
+		eval /bin/bash -c \"$@\"
+		exit $?
+	fi
+
+	# run in background, remove trap, and remove temp files
+	# in new shell after command finishes, otherwise we would
+	# for example, remove gif file before sxiv could play it
+	trap - EXIT
+	eval kitty /bin/bash -c \"$@\" "; rm -f $tmp; rm -rf $dtmp" &
+	exit 0
+}
+
+
+## ==========================================================================
+#   Runs cmd in background or not, depending if -n flag has been passed
+## ==========================================================================
+cmd()
+{
+	if [ $open_in_new_window -eq 0 ]; then
+		eval $@
+		exit $?
+	fi
+
+	# run in background, remove trap, and remove temp files
+	# in new shell after command finishes, otherwise we would
+	# for example, remove gif file before sxiv could play it
+	trap - EXIT
+	eval $@ "; rm -f $tmp; rm -rf $dtmp" &
+	exit 0
+}
+
+## ==========================================================================
+#   open file
+## ==========================================================================
+open_file()
+{
+	file=$1
+	mime=$(file -bi "$file" | cut -f1 -d\;)
+	mime_category=$(echo $mime | cut -f1 -d/)
+	mime_type=$(echo $mime | cut -f2 -d/)
+
+	case $mime in
+#	application/vnd.openxmlformats-officedocument.spreadsheetml.sheet)
+#		term texel -c30 $file
+#		exit 0
+#		;;
+
+	# ms office formats
+	application/vnd.openxmlformats-officedocument.wordprocessingml.document) ;&
+	application/vnd.openxmlformats-officedocument.wordprocessingml.template) ;&
+	application/vnd.ms-word.document.macroEnabled.12) ;&
+	application/vnd.ms-word.template.macroEnabled.12)
+		term 'doc2odt --stdout "'$file'" | odt2html --stdin --stdout | elinks'
+		exit 0
+		;;
+
+	# xls/ods (spreadhseets formats)
+	application/vnd.ms-excel) ;&
+	application/vnd.ms-excel) ;&
+	application/vnd.ms-excel) ;&
+	application/vnd.openxmlformats-officedocument.spreadsheetml.sheet) ;&
+	application/vnd.openxmlformats-officedocument.spreadsheetml.template) ;&
+	application/vnd.ms-excel.sheet.macroEnabled.12) ;&
+	application/vnd.ms-excel.template.macroEnabled.12) ;&
+	application/vnd.ms-excel.addin.macroEnabled.12) ;&
+	application/vnd.ms-excel.sheet.binary.macroEnabled.12)
+		loffice --convert-to html "$file" --outdir $dtmp.loffice
+		sed -i 's/border="0"/border="1"/g' $dtmp.loffice/*.html
+		term "elinks $dtmp.loffice/*.html; rm -rf $dtmp.loffice"
+		exit 0
+		;;
+
+	application/pdf)
+		term "pdftohtml -s -dataurls -stdout \"$file\" | elinks"
+		exit 0
+		;;
+
+	text/plain)
+		term less -S "$file"
+		exit 0
+		;;
+
+	text/html)
+		term elinks "$file"
+		exit 0
+		;;
+
+	audio/ogg)
+		oggdec "$file" -o - | aplay
+		exit 0
+		;;
+
+	image/gif)
+		cmd sxiv -a "$file"
+		exit 0
+		;;
+
+	esac
+
+	case $mime_category in
+	image)
+		cmd feh "$file"
+		exit 0
+		;;
+
+	video)
+		cmd mpv "$file"
+		exit 0
+		;;
+
+	esac
+
+	echo "Unkown type $mime"
+	exit 1
+}
+
+
+## ==========================================================================
+#   Opens url link
+## ==========================================================================
+open_url()
+{
+	url=$1
+	# remove search engines added shit to open link directly
+	# remove google preamble and spy link at the end
+	url=$(echo "$url" | sed 's@^https://www.google.com/url?q=@@')
+	url=$(echo "$url" | sed 's@&sa=.*@@')
+	# save $url, as we will alter it for ease of processing
+	urlsave=$url
+	prot=$(echo $url | cut -f1 -d:)
+
+	if [ $prot ]; then
+		# link with a protocol, remove protocol from url
+		url=$(echo "$url" | cut -f3- -d/)
+	fi
+
+	domain=$(echo "$url" | cut -f1 -d/)
+	# remove leading www, is's a subdomain and not domain,
+	# usually it's not necessary anyway
+	domain=$(echo "$domain" | sed 's/^www\.//')
+	# resource, like dir/page.php?arg=param
+	resource=$(echo "$url" | cut -f2- -d/)
+	# if link is a direct link to file, it may have extension
+	ext=${resource##*.}
+	# restore back full url
+	url=$urlsave
+
+	# process known hosts first
+	case $domain in
+	youtube*|youtu.be*|v.redd.it|gfycat.com)
+		# mpv can open youtube
+		# AND reddit videos, NICE
+		# AND gfycat, I am getting impressed
+		cmd mpv --script-opts=ytdl_hook-ytdl_path=yt-dlp "$url"
+		exit 0
+		;;
+
+	imgur.com)
+		cd $dtmp
+		id=$(echo "$resource" | cut -f2 -d/)
+		imgur.sh "$url"
+		cmd feh */*
+		exit 0
+		;;
+
+	jira.lgi.io)
+		ticket=$(echo "$resource" | cut -f2 -d/)
+		term term-jira.sh $ticket
+		exit 0
+		;;
+
+	gerrit.onemw.net)
+		id=$(echo "$resource" | grep -Po "\d+" | head -n1)
+		cmd gertty --open "https://$domain/$id"
+		eixt 0
+		;;
+
+	gist.github.com)
+		term "curl -Lks \"$url/raw\" | less"
+		exit 0
+		;;
+	esac
+
+	# if the url contains extension, we might try to open it directly
+	# of course it can bite us in the future, but it did not for
+	# couple of years, so let's leave it
+	case $ext in
+	jpg|png)
+		curl -Lks "${url}" | feh -Z - &
+		exit 0
+		;;
+	esac
+
+	# last step is to simply download file and open it as a file
+	curl -Lks "$url" > $tmp
+	open_file $tmp
+}
+
+## ==========================================================================
+#                          _____ / /_ ____ _ _____ / /_
+#                         / ___// __// __ `// ___// __/
+#                        (__  )/ /_ / /_/ // /   / /_
+#                       /____/ \__/ \__,_//_/    \__/
+## ==========================================================================
+
+if [ $# -lt 1 ]; then
+	echo "usage: $0 [-n] <file>"
+	exit 1
+fi
+
+tmp=$(mktemp)
+dtmp=$(mktemp -d)
+trap "rm -f $tmp; rm -rf $dtmp" EXIT
+
+open_in_new_window=0
+
+if [ "$1" = '-n' ]; then
+	open_in_new_window=1
+	file=$2
+else
+	file=$1
+fi
+
+if [ -f "$file" ]; then
+	open_file "$file"
+elif is_url "$file"; then
+	open_url "$file"
+elif is_jira_ticket $file; then
+	term term-jira.sh $file
+elif is_gerrit_patch $file; then
+	patchid=$(echo $file | sed 's@:@/+/@')
+	term gertty --open "https://gerrit.onemw.net/c/$patchid"
+fi
