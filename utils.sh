@@ -7,9 +7,11 @@ help_file=$(mktemp)
 
 _at_exit()
 {
+	if [ "$(type -t at_exit 2>/dev/null)" = function ]; then
+		at_exit
+	fi
 	rm -f $help_file
 }
-# each file can have it's own trap
 trap _at_exit EXIT
 
 help()
