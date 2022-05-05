@@ -40,5 +40,18 @@ print_help()
 	cat $help_file
 }
 
+displaytime()
+{
+	local T=$1
+	local D=$((T/60/60/24))
+	local H=$((T/60/60%24))
+	local M=$((T/60%60))
+	local S=$((T%60))
+	(( D > 0 )) && printf '%02d:' $D
+	(( D > 0 || H > 0 )) && printf '%02d:' $H
+	(( D > 0 || H > 0 || M > 0 )) && printf '%02d:' $M
+	printf '%02d\n' $S
+}
+
 # sends stdin to phone
 notify_phone='sendxmpp -t -n lm-notif@kurwinet.pl'
