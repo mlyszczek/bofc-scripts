@@ -47,7 +47,7 @@ displaytime()
 	local H=$((T/60/60%24))
 	local M=$((T/60%60))
 	local S=$((T%60))
-	(( D > 0 )) && printf '%02d:' $D
+	(( D > 0 )) && printf '%02dd' $D
 	(( D > 0 || H > 0 )) && printf '%02d:' $H
 	(( D > 0 || H > 0 || M > 0 )) && printf '%02d:' $M
 	printf '%02d\n' $S
