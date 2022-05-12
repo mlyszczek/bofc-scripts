@@ -16,7 +16,10 @@ monitor_id=1
 topic=/pc/$(hostname)/monitor/$monitor_id/state
 
 while :; do
-	if ddcutil -d $monitor_id getvcp d6 2>/dev/null | grep '(sl=0x01)' >/dev/null; then
+	ddout=$(ddcutil -d $monitor_id getvcp d6 2>/dev/null)
+	if [ -z "$ddout" ]; then continue; fi
+
+	if echo $ddout | grep '(sl=0x01)' >/dev/null; then
 		state=on
 	else
 		state=off
