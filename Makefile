@@ -1,13 +1,15 @@
+PROGS=$(notdir $(shell find . -type f -executable -and -not -path "./.git*"))
+PREFIX=/usr/bofc
+Q=@
+
 all:
 	@echo done
 
 install:
-	install -D -m755 md-elinks            $(DESTDIR)/usr/bofc/bin/md-elinks
-	install -D -m755 open                 $(DESTDIR)/usr/bofc/bin/open
-	install -D -m755 open-in-background   $(DESTDIR)/usr/bofc/bin/open-in-background
-	install -D -m755 print                $(DESTDIR)/usr/bofc/bin/print
-	install -D -m755 zfs-show-compress.sh $(DESTDIR)/usr/bofc/bin/zfs-show-compress.sh
-	install -D -m755 start-program        $(DESTDIR)/usr/bofc/bin/start-program
-	install -D -m755 wake-pc.sh           $(DESTDIR)/usr/bofc/bin/wake-pc.sh
-	install -D -m755 screen-powermode-monitord.sh  $(DESTDIR)/usr/bofc/bin/screen-powermode-monitord.sh
-	install -D -m755 utils.sh             $(DESTDIR)/usr/bofc/lib/utils.sh
+	$Q for f in $(PROGS); do \
+	    if [ $$f = utils.sh ]; then continue; fi; \
+	    echo install $$f; \
+	    install -D -m755 $$f $(DESTDIR)/$(PREFIX)/bin/$$f; \
+	done
+	$Q install -D -m755 utils.sh $(DESTDIR)/$(PREFIX)/lib/utils.sh
+	@echo install utils.sh
