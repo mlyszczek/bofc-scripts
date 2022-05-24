@@ -1,0 +1,8 @@
+#!/bin/sh
+
+. /usr/bofc/lib/utils.sh
+cat << HELP | help ne 0 $@
+suspends pc to ram
+HELP
+
+echo mem > /sys/power/state
