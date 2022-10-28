@@ -1,0 +1,32 @@
+#!/sbin/openrc-run
+# Copyright 1999-2018 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+
+supervisor=supervise-daemon
+supervise_daemon_args="-uadm"
+command=/usr/bofc/bin/log-monitor.sh
+command_args="$FILENAME '$REGEXP'"
+
+depend() {
+	need localmount
+}
+
+start_pre() {
+	if [ ${RC_SVCNAME#*.} = $RC_SVCNAME ]; then
+		eerror "${RC_SVCNAME} cannot be started directly. You must create"
+		eerror "symbolic links to it for the files you want to monitor."
+		return 1
+	fi
+
+	if [ ! -f "$FILENAME" ]; then
+		eerror "File to monitor '$FILENAME' does not exist"
+		return 1
+	fi
+
+	chgrp adm $FILENAME
+	chmod g+r $FILENAME
+}
+
+stop_pre() {
+	kill -sTERM -$(pgrep -P $(cat /var/run/supervise-$RC_SVCNAME.pid))
+}

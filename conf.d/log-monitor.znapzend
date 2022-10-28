@@ -1,0 +1,2 @@
+FILENAME=/var/log/znapzend.log
+REGEXP='(ERROR:|\[warn\])'
