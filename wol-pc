@@ -5,10 +5,11 @@ cat << HELP | help ne 1 $@
 usage: $0 <hostname>
 
 wakes <hostname> over wake on lan
-hostname can be: hex vetinari
+hostname can be: hex vetinari librarian
 HELP
 
 hex=d8:bb:c1:3d:30:93
 vetinari=38:2c:4a:74:0a:3f
+librarian=34:97:f6:9a:bd:2a
 
 wakeonlan ${!1}
