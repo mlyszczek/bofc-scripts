@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. /usr/bofc/lib/utils.sh
+
+cat << HELP | help ne 1 $@
+usage: $0 <pid>
+
+Makes <pid> job to work in idle only. Changes io priority to idle.
+Best used with emerge
+
+PORTAGE_IONICE_COMMAND="/usr/bofc/bin/io-priority \${PID}"
+HELP
+
+PID=$1
+
+# io scheduling, set to idle
+ionice -c 3 -p $PID
+# set task scheduler to SCHED_IDLE
+chrt -p -i 0 $PID
