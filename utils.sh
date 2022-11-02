@@ -64,12 +64,12 @@ displaytime()
 
 ## ==========================================================================
 #   Returns day number of first working day for the mon-year
-#       mon    month (1-12)
 #       year   year on format YYYY
+#       mon    month (1-12)
 ## ==========================================================================
 date_get_first_working_day()
 {
-	LC_ALL=C cal $1 $2 | awk 'NR<3{next} {
+	LC_ALL=C cal $2 $1 | awk 'NR<3{next} {
 	if(NF==1){
 		next;print $1;exit
 	}
@@ -82,16 +82,16 @@ date_get_first_working_day()
 
 ## ==========================================================================
 #   Returns day number of first day for the mon-year
-#       day    day to get (su mo tu we th fr sa)
-#       mon    month (1-12)
 #       year   year on format YYYY
+#       mon    month (1-12)
+#       day    day to get (su mo tu we th fr sa)
 #
 #   example:
-#       $0 sa 5 2021    will return day of a first saturday of may 2021
+#       $0 2021 5 sa    will return day of a first saturday of may 2021
 ## ==========================================================================
 date_get_first_day_of_month()
 {
-	case $1 in
+	case $3 in
 		su) d=1 ;;
 		mo) d=2 ;;
 		tu) d=3 ;;
@@ -102,7 +102,7 @@ date_get_first_day_of_month()
 		*) echo unkown day; exit 1 ;;
 	esac
 
-	dates=$(LC_ALL=C cal $2 $3 |
+	dates=$(LC_ALL=C cal $2 $1 |
 		# skip first (textual date like February 2022)
 		# and second (su mo tu we th fr sa) lines
 		tail -n +3 |
@@ -124,12 +124,12 @@ date_get_first_day_of_month()
 
 ## ==========================================================================
 #   Returns last day of the month
-#       mon    month (1-12)
 #       year   year on format YYYY
+#       mon    month (1-12)
 ## ==========================================================================
 date_get_last_day_of_month()
 {
-	LC_ALL=C cal $1 $2 | tr '\n' ' ' | rev | awk '{print $1}' | rev
+	LC_ALL=C cal $2 $1 | tr '\n' ' ' | rev | awk '{print $1}' | rev
 }
 
 # sends stdin to phone
