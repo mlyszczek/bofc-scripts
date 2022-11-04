@@ -1,0 +1,11 @@
+#!/bin/sh
+
+. /usr/bofc/lib/utils.sh
+cat << HELP | help ne 1 $@
+Usage: $0 <pkg>
+
+Emerges <pkg> on binhost and then installs binary package on the system
+HELP
+
+ssh -tt hex build-and-install-bin-pkg $(hostname) $1
+emerge -avkgj $1
