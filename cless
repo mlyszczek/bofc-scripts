@@ -1,0 +1,14 @@
+#!/bin/sh
+
+. /usr/bofc/lib/utils.sh
+cat << HELP | help ge 2 $@
+usage: $0 [file]
+
+colorful less. When no file stdout is read, otherwise file is shown
+HELP
+
+if [ "$1" ]; then
+	pygmentize -g $1 | less
+else
+	pygmentize -g | less
+fi
