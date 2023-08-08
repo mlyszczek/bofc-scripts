@@ -11,6 +11,6 @@ HELP
 hex=d8:bb:c1:3d:30:93
 vetinari=74:56:3c:32:2d:a3
 wonse=38:2c:4a:74:0a:3f
-librarian=34:97:f6:9a:bd:2a
+librarian=14:da:e9:06:16:e6
 
 wakeonlan ${!1}
