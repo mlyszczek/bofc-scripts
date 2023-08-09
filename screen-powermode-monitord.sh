@@ -23,6 +23,7 @@ if [ x$1 = x--off ]; then
 	exit 0
 fi
 
+echo -n > $state_file
 while :; do
 	ddout=$(ddcutil -d $monitor_id getvcp d6 2>/dev/null)
 
