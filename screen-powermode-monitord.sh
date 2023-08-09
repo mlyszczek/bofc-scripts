@@ -1,7 +1,7 @@
 #!/bin/sh
 
 . /usr/bofc/lib/utils.sh
-cat << HELP | help le 1 $@
+cat << HELP | help gt 1 $@
 Monitors power mode of monitor.
 Will send mqtt event on monitor state change
 
