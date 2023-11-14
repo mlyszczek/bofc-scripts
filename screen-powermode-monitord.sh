@@ -46,8 +46,10 @@ while :; do
 			continue
 		fi
 		# state change of monitor, save state and publish event
-		echo $state > $state_file
-		mosquitto_pub -h $mqtt_host -t $topic -m $state -q 2 -r
+		# update state file only when mosquitto_pub was a success.
+		if mosquitto_pub -h $mqtt_host -t $topic -m $state -q 2 -r; then
+			echo $state > $state_file
+		fi
 	fi
 	
 	sleep $interval
