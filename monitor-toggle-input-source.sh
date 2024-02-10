@@ -8,7 +8,7 @@ HELP
 
 monitor_index=1
 
-current=$(ddcutil --brief -d $monitor_index getvcp 60 | awk '{print $4}')
+current=$(ddcutil --brief -d $monitor_index getvcp 60 | grep VCP | awk '{print $4}')
 if ! test $current; then
 	echo ddcutil --brief -d $monitor_index getvcp 60 returned empty value
 	exit 1
